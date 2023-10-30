@@ -57,7 +57,7 @@ func TestClient(t *testing.T) {
 
 	c := ext4.NewClient()
 
-	err = c.CreateFilesystem(ctx, ext4.CreateFSOptions{
+	err = c.CreateFilesystem(ctx, ext4.CreateOptions{
 		Device: devPath,
 		Size:   "100M",
 		Label:  t.Name(),
@@ -114,7 +114,7 @@ func TestClient(t *testing.T) {
 
 	t.Log("Resizing ext4 filesystem")
 
-	err = c.ResizeFilesystem(ctx, ext4.ResizeFSOptions{
+	err = c.ResizeFilesystem(ctx, ext4.ResizeOptions{
 		Device: devPath,
 		Size:   "500M",
 	})
@@ -122,7 +122,7 @@ func TestClient(t *testing.T) {
 
 	t.Log("Checking ext4 filesystem")
 
-	err = c.CheckFilesystem(ctx, ext4.CheckFSOptions{
+	err = c.CheckFilesystem(ctx, ext4.CheckOptions{
 		Device: devPath,
 		Force:  true,
 	})

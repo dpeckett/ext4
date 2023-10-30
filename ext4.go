@@ -45,8 +45,8 @@ func NewClient(opts ...ClientOption) *Client {
 	return c
 }
 
-// CreateFSOptions provides options for creating an ext4 filesystem.
-type CreateFSOptions struct {
+// CreateOptions provides options for creating an ext4 filesystem.
+type CreateOptions struct {
 	Device                   string `arg:"0"` // Device where the filesystem will be created.
 	Size                     string `arg:"1"` // Optional size of the filesystem.
 	CheckForBadBlocks        bool   `arg:"c"` // Check for bad blocks before creating the filesystem.
@@ -78,7 +78,7 @@ type CreateFSOptions struct {
 }
 
 // Create an ext4 filesystem.
-func (c *Client) CreateFilesystem(ctx context.Context, opts CreateFSOptions) error {
+func (c *Client) CreateFilesystem(ctx context.Context, opts CreateOptions) error {
 	cmdArgs := []string{"-q", "-t", "ext4"}
 	cmdArgs = append(cmdArgs, args.Marshal(opts)...)
 
@@ -86,8 +86,8 @@ func (c *Client) CreateFilesystem(ctx context.Context, opts CreateFSOptions) err
 	return err
 }
 
-// ResizeFSOptions provides options for resizing an ext4 filesystem.
-type ResizeFSOptions struct {
+// ResizeOptions provides options for resizing an ext4 filesystem.
+type ResizeOptions struct {
 	Device       string `arg:"0"` // Device containing the filesystem to resize.
 	Size         string `arg:"1"` // Optional size of the filesystem.
 	Force        bool   `arg:"f"` // Skip safety checks.
@@ -100,13 +100,13 @@ type ResizeFSOptions struct {
 }
 
 // Resize an ext4 filesystem.
-func (c *Client) ResizeFilesystem(ctx context.Context, opts ResizeFSOptions) error {
+func (c *Client) ResizeFilesystem(ctx context.Context, opts ResizeOptions) error {
 	_, err := c.run(ctx, "resize2fs", args.Marshal(opts)...)
 	return err
 }
 
-// CheckFSOptions provides options for checking an ext4 filesystem.
-type CheckFSOptions struct {
+// CheckOptions provides options for checking an ext4 filesystem.
+type CheckOptions struct {
 	Device              string `arg:"0"` // Device containing the filesystem to check.
 	Preen               bool   `arg:"p"` // Automatically repair the filesystem.
 	NoFix               bool   `arg:"n"` // Perform a read-only check.
@@ -125,7 +125,7 @@ type CheckFSOptions struct {
 }
 
 // Check an ext4 filesystem.
-func (c *Client) CheckFilesystem(ctx context.Context, opts CheckFSOptions) error {
+func (c *Client) CheckFilesystem(ctx context.Context, opts CheckOptions) error {
 	var cmdArgs []string
 	if !opts.Preen && !opts.NoFix {
 		cmdArgs = []string{"-y"}
