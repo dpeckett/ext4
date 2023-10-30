@@ -69,7 +69,7 @@ type CreateFSOptions struct {
 	UsageType                string `arg:"T"` // Filesystem usage type (supported: floppy, small, default).
 	UUID                     string `arg:"U"` // UUID for the filesystem.
 	ErrorBehavior            string `arg:"e"` // Kernel behavior when errors are detected (supported: continue, remount-ro, panic).
-	UndoFile                 string `arg:"z"` // Before overwriting blocks, backup the contents to an undo file.
+	UndoFile                 string `arg:"z"` // Before overwriting blocks, backup the contents.
 	Journal                  bool   `arg:"j"` // Create an ext3 journal.
 	DryRun                   bool   `arg:"n"` // Dry run (don't actually create the filesystem).
 	DirectIO                 bool   `arg:"D"` // Use direct I/O when writing to the disk.
@@ -86,21 +86,52 @@ func (c *Client) CreateFilesystem(ctx context.Context, opts CreateFSOptions) err
 	return err
 }
 
+// ResizeFSOptions provides options for resizing an ext4 filesystem.
 type ResizeFSOptions struct {
 	Device       string `arg:"0"` // Device containing the filesystem to resize.
 	Size         string `arg:"1"` // Optional size of the filesystem.
 	Force        bool   `arg:"f"` // Skip safety checks.
-	Flush        bool   `arg:"F"` // Flush the device's buffer cache before beginning.
+	Flush        bool   `arg:"F"` // Flush the device's buffer cache.
 	Shrink       bool   `arg:"M"` // Shrink the filesystem to the minimum size.
 	Enable64Bit  bool   `arg:"b"` // Enable 64-bit feature.
 	Disable64Bit bool   `arg:"s"` // Disable 64-bit feature.
 	RAIDStride   *int   `arg:"S"` // RAID stride size in filesystem blocks.
-	UndoFile     string `arg:"z"` // Before overwriting blocks, backup the contents to an undo file.
+	UndoFile     string `arg:"z"` // Before overwriting blocks, backup the contents.
 }
 
 // Resize an ext4 filesystem.
 func (c *Client) ResizeFilesystem(ctx context.Context, opts ResizeFSOptions) error {
 	_, err := c.run(ctx, "resize2fs", args.Marshal(opts)...)
+	return err
+}
+
+// CheckFSOptions provides options for checking an ext4 filesystem.
+type CheckFSOptions struct {
+	Device              string `arg:"0"` // Device containing the filesystem to check.
+	Preen               bool   `arg:"p"` // Automatically repair the filesystem.
+	NoFix               bool   `arg:"n"` // Perform a read-only check.
+	CheckForBadBlocks   bool   `arg:"c"` // Check for bad blocks.
+	AppendBadBlocks     bool   `arg:"k"` // Append to existing bad blocks list.
+	AppendBadBlocksFile string `arg:"l"` // Append bad blocks from file to existing bad blocks list.
+	BadBlocksFile       string `arg:"L"` // Use bad blocks list from file.
+	Force               bool   `arg:"f"` // Force checking even if the filesystem seems clean.
+	OptimizeDirectories bool   `arg:"D"` // Optimize directories.
+	Flush               bool   `arg:"F"` // Flush the device's buffer cache.
+	Superblock          *int   `arg:"b"` // Use alternative superblock.
+	Blocksize           *int   `arg:"B"` // Block size in bytes (supported: 1024, 2048 and 4096 bytes).
+	ExternalJournal     string `arg:"j"` // External journal for the filesystem.
+	ExtendedOptions     string `arg:"E"` // Extended options, comma separated list.
+	UndoFile            string `arg:"z"` // Before overwriting blocks, backup the contents.
+}
+
+// Check an ext4 filesystem.
+func (c *Client) CheckFilesystem(ctx context.Context, opts CheckFSOptions) error {
+	var cmdArgs []string
+	if !opts.Preen && !opts.NoFix {
+		cmdArgs = []string{"-y"}
+	}
+	cmdArgs = append(cmdArgs, args.Marshal(opts)...)
+	_, err := c.run(ctx, "e2fsck", cmdArgs...)
 	return err
 }
 

@@ -53,14 +53,24 @@ func TestClient(t *testing.T) {
 
 	t.Log("Creating ext4 filesystem")
 
+	ctx := context.Background()
+
 	c := ext4.NewClient()
 
-	err = c.CreateFilesystem(context.Background(), ext4.CreateFSOptions{
+	err = c.CreateFilesystem(ctx, ext4.CreateFSOptions{
 		Device: devPath,
 		Size:   "100M",
 		Label:  t.Name(),
 	})
 	require.NoError(t, err, "failed to create ext4 filesystem")
+
+	t.Log("Verifying filesystem label")
+
+	cmd := exec.Command("e2label", devPath)
+	output, err := cmd.Output()
+	require.NoError(t, err, "failed to get filesystem label")
+
+	require.Equal(t, t.Name(), strings.TrimSpace(string(output)), "filesystem label does not match")
 
 	t.Log("Mounting ext4 filesystem")
 
@@ -69,16 +79,15 @@ func TestClient(t *testing.T) {
 	require.NoError(t, err, "failed to mount ext4 filesystem")
 
 	t.Cleanup(func() {
-		t.Log("Unmounting ext4 filesystem")
+		t.Log("Unmounting ext4 filesystem (if necessary)")
 
-		err := exec.Command("umount", mountPath).Run()
-		require.NoError(t, err, "failed to unmount ext4 filesystem")
+		_ = exec.Command("umount", mountPath).Run()
 	})
 
 	t.Log("Verifying filesystem size")
 
-	cmd := exec.Command("df", "-B1", mountPath)
-	output, err := cmd.Output()
+	cmd = exec.Command("df", "-B1", mountPath)
+	output, err = cmd.Output()
 	require.NoError(t, err, "failed to get filesystem size")
 
 	size, err := strconv.Atoi(strings.Fields(strings.Split(string(output), "\n")[1])[1])
@@ -98,23 +107,39 @@ func TestClient(t *testing.T) {
 	expectedHash := "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
 	require.Contains(t, string(output), expectedHash, "file contents do not match")
 
-	t.Log("Verifying filesystem label")
+	t.Log("Unmounting ext4 filesystem")
 
-	cmd = exec.Command("e2label", devPath)
-	output, err = cmd.Output()
-	require.NoError(t, err, "failed to get filesystem label")
-
-	require.Equal(t, t.Name(), strings.TrimSpace(string(output)), "filesystem label does not match")
+	err = exec.Command("umount", mountPath).Run()
+	require.NoError(t, err, "failed to unmount ext4 filesystem")
 
 	t.Log("Resizing ext4 filesystem")
 
-	err = c.ResizeFilesystem(context.Background(), ext4.ResizeFSOptions{
+	err = c.ResizeFilesystem(ctx, ext4.ResizeFSOptions{
 		Device: devPath,
 		Size:   "500M",
 	})
 	require.NoError(t, err, "failed to resize ext4 filesystem")
 
-	t.Log("Verifying filesystem size")
+	t.Log("Checking ext4 filesystem")
+
+	err = c.CheckFilesystem(ctx, ext4.CheckFSOptions{
+		Device: devPath,
+		Force:  true,
+	})
+	require.NoError(t, err, "failed to check ext4 filesystem")
+
+	t.Log("Mounting ext4 filesystem")
+
+	err = exec.Command("mount", devPath, mountPath).Run()
+	require.NoError(t, err, "failed to mount ext4 filesystem")
+
+	t.Cleanup(func() {
+		t.Log("Unmounting ext4 filesystem (if necessary)")
+
+		_ = exec.Command("umount", mountPath).Run()
+	})
+
+	t.Log("Verifying resized filesystem size")
 
 	cmd = exec.Command("df", "-B1", mountPath)
 	output, err = cmd.Output()
