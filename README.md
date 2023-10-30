@@ -25,7 +25,7 @@ func main() {
         Device: "/dev/loop0",
     })
     if err != nil {
-        log.Fatal("Failed to create filesystem", err)
+        log.Fatal("Failed to create filesystem: ", err)
     }
 
     // Shrink the filesystem to its minimum size.
@@ -34,7 +34,7 @@ func main() {
         Shrink: true,
     })
     if err != nil {
-        log.Fatal("Failed to resize filesystem", err)
+        log.Fatal("Failed to resize filesystem: ", err)
     }
 }
 ```

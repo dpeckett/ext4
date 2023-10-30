@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
+	"path/filepath"
 
 	"github.com/dpeckett/args"
 )
@@ -136,15 +136,12 @@ func (c *Client) CheckFilesystem(ctx context.Context, opts CheckOptions) error {
 }
 
 func (c *Client) run(ctx context.Context, cmdName string, cmdArgs ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, cmdName, cmdArgs...)
-
-	cmd.Env = os.Environ()
-	for i, e := range cmd.Env {
-		if strings.HasPrefix(e, "PATH=") {
-			cmd.Env[i] = c.path
-			break
-		}
+	cmdPath, err := c.findExecutable(cmdName)
+	if err != nil {
+		return nil, err
 	}
+
+	cmd := exec.CommandContext(ctx, cmdPath, cmdArgs...)
 
 	var out bytes.Buffer
 	var errOut bytes.Buffer
@@ -156,4 +153,18 @@ func (c *Client) run(ctx context.Context, cmdName string, cmdArgs ...string) ([]
 	}
 
 	return out.Bytes(), nil
+}
+
+func (c *Client) findExecutable(cmdName string) (string, error) {
+	for _, dir := range filepath.SplitList(c.path) {
+		if dir == "" {
+			dir = "."
+		}
+		cmdPath := filepath.Join(filepath.Clean(dir), cmdName)
+		if _, err := os.Stat(cmdPath); err == nil {
+			return cmdPath, nil
+		}
+	}
+
+	return "", fmt.Errorf("command not found: %w", os.ErrNotExist)
 }
