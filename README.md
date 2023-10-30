@@ -22,8 +22,8 @@ func main() {
     ctx := context.Background()
 
     err := c.CreateFilesystem(ctx, ext4.CreateOptions{
-		Device: "/dev/loop0",
-	})
+        Device: "/dev/loop0",
+    })
     if err != nil {
         log.Fatal("Failed to create filesystem", err)
     }
