@@ -6,7 +6,7 @@ A Go wrapper for working with ext4 filesystems (e2fsprogs).
 
 This is a work in progress. The following commands are implemented:
 
-- [ ] e2fsck
+- [x] e2fsck
 - [ ] e2image
 - [ ] e2label
 - [ ] e2mmpstatus
